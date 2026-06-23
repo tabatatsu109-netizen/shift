@@ -106,7 +106,8 @@ table thead th{background:#eef2f6;position:sticky;top:0;z-index:2;}
 
 /* ---- modal ---- */
 .modal-overlay{position:fixed;inset:0;background:rgba(20,30,40,.45);
-  display:flex;align-items:center;justify-content:center;z-index:50;}
+  display:none;align-items:center;justify-content:center;z-index:50;}
+.modal-overlay.open{display:flex;}
 .modal-box{background:#fff;border-radius:8px;padding:22px 26px;max-width:420px;width:90%;
   position:relative;box-shadow:0 8px 30px rgba(0,0,0,.25);max-height:80vh;overflow-y:auto;}
 .modal-close{position:absolute;top:10px;right:12px;background:none;border:none;

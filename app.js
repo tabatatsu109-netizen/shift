@@ -327,14 +327,14 @@ function openStaffModal(staffId, ym){
       <dd class="modal-memo">${escapeHtml(st.memo||"（メモはありません）")}</dd>
     </dl>
   `;
-  overlay.hidden = false;
+  overlay.classList.add("open");
 }
 
 document.getElementById("staffModalClose").addEventListener("click", ()=>{
-  document.getElementById("staffModalOverlay").hidden = true;
+  document.getElementById("staffModalOverlay").classList.remove("open");
 });
 document.getElementById("staffModalOverlay").addEventListener("click", (e)=>{
-  if(e.target.id === "staffModalOverlay") e.currentTarget.hidden = true;
+  if(e.target.id === "staffModalOverlay") e.currentTarget.classList.remove("open");
 });
 
 /* =========================================================
@@ -714,6 +714,30 @@ function escapeHtml(str){
     "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
   }[c]));
 }
+
+/* ---------- データリセット ---------- */
+document.getElementById("btnResetAll").addEventListener("click", ()=>{
+  if(!confirm("すべてのデータ（スタッフ・店舗・パターン・シフト・申請）を削除して、初期データに戻します。\n\n本当によろしいですか？")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  db = DB.load();
+  renderDashboard();
+  alert("初期データにリセットしました。");
+});
+
+/* ---------- データ整合性チェック ---------- */
+(function healData(){
+  // パターンが未設定のスタッフには基本パターンを生成
+  let changed = false;
+  db.staff.forEach(st=>{
+    if(!db.patterns[st.id] || !Array.isArray(db.patterns[st.id]) || db.patterns[st.id].length!==7){
+      db.patterns[st.id] = WEEKDAYS.map((_,wd)=>
+        (st.baseOffDays||[]).includes(wd) ? {am:null,pm:null} : {am:st.baseStore, pm:st.baseStore}
+      );
+      changed = true;
+    }
+  });
+  if(changed) DB.save(db);
+})();
 
 /* ---------- 初期表示 ---------- */
 renderDashboard();
