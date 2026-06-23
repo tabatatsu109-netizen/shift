@@ -141,6 +141,14 @@ select.status-却下{color:var(--danger);}
 
 .app-footer{text-align:center;color:var(--muted);font-size:11.5px;padding:16px;}
 
+/* ---- store links ---- */
+.store-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+.store-link-card{background:#eef5fb;border:1px solid #bcd6ea;border-radius:var(--radius);
+  padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:10px;}
+.store-link-card a{color:var(--accent);word-break:break-all;}
+.store-link-card .copy-link{background:var(--accent);color:#fff;border:none;border-radius:4px;
+  padding:4px 10px;cursor:pointer;font-size:11.5px;white-space:nowrap;}
+
 @media (max-width:720px){
   main{padding:8px;}
   .tab-panel{padding:10px;}

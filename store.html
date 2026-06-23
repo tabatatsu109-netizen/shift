@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>シフト確認・申請</title>
+<style>
+:root{
+  --navy:#1f3a5f;--accent:#2f6fa3;--bg:#f4f6f8;--panel:#fff;
+  --border:#d7dde3;--text:#2a2f36;--muted:#6b7480;
+  --danger:#c0392b;--danger-bg:#fdecea;--ok:#2e7d4f;--ok-bg:#e8f5ec;
+  --radius:6px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:"Hiragino Sans","Yu Gothic UI","Segoe UI",sans-serif;font-size:14px;}
+
+header{background:var(--navy);color:#fff;padding:12px 16px;}
+header h1{margin:0;font-size:17px;font-weight:600;}
+header p{margin:4px 0 0;font-size:12px;opacity:.8;}
+
+main{padding:16px;max-width:800px;margin:0 auto;}
+
+/* ---- select screen ---- */
+.select-screen{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;text-align:center;}
+.select-screen h2{margin-top:0;font-size:16px;color:var(--navy);}
+.store-btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:18px 0 10px;}
+.store-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);
+  padding:14px 22px;font-size:15px;cursor:pointer;font-weight:600;min-width:120px;}
+.store-btn:hover{background:#255a85;}
+
+/* ---- main view ---- */
+.view-panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;margin-bottom:16px;}
+.view-panel h2{margin:0 0 10px;font-size:15px;border-left:4px solid var(--accent);padding-left:8px;}
+.hint{color:var(--muted);font-size:12.5px;margin-top:-4px;}
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px;
+  padding:10px;background:#eef2f6;border-radius:var(--radius);}
+.toolbar label{font-size:13px;display:flex;align-items:center;gap:6px;}
+.btn{border:none;border-radius:5px;padding:8px 14px;font-size:13px;cursor:pointer;font-weight:600;}
+.btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{background:#255a85;}
+.btn-light{background:#e3e7eb;color:var(--text);}
+.btn-back{background:none;color:#fff;border:1px solid rgba(255,255,255,.4);padding:6px 12px;
+  border-radius:5px;cursor:pointer;font-size:12px;margin-left:auto;}
+.btn-back:hover{background:rgba(255,255,255,.15);}
+
+/* ---- calendar ---- */
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px;}
+.cal-head{text-align:center;font-weight:600;color:var(--muted);font-size:12px;padding:4px;}
+.cal-cell{border:1px solid var(--border);border-radius:5px;min-height:80px;padding:5px;
+  background:#fff;font-size:11.5px;}
+.cal-cell.blank{background:transparent;border:none;}
+.cal-date{font-weight:700;color:var(--navy);margin-bottom:3px;}
+.cal-cell.sun .cal-date{color:var(--danger);}
+.cal-cell.sat .cal-date{color:var(--accent);}
+.cal-label{color:var(--muted);font-size:10px;margin-top:3px;}
+.cal-names{font-size:11.5px;}
+
+/* ---- form ---- */
+.req-form{background:#fafbfc;border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px;}
+.form-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px;}
+.form-row label{display:flex;flex-direction:column;font-size:12.5px;color:var(--muted);gap:4px;min-width:140px;flex:1;}
+.form-row label.full{flex:1 1 100%;min-width:100%;}
+.form-row input,.form-row select,.form-row textarea{
+  font-size:13.5px;padding:6px 8px;border:1px solid var(--border);border-radius:4px;font-family:inherit;color:var(--text);}
+
+/* ---- request list ---- */
+.req-list{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+.req-list th,.req-list td{border:1px solid var(--border);padding:6px 8px;text-align:left;}
+.req-list thead th{background:#eef2f6;position:sticky;top:0;}
+.status-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11.5px;font-weight:600;}
+.status-未確認{background:#f0e6c0;color:#8a6d00;}
+.status-確認済み{background:#d0e4f5;color:#1a5a8a;}
+.status-反映済み{background:var(--ok-bg);color:var(--ok);}
+.status-却下{background:var(--danger-bg);color:var(--danger);}
+
+.back-link{display:inline-block;margin-top:12px;color:var(--accent);font-size:13px;cursor:pointer;}
+
+@media(max-width:600px){
+  .calendar{grid-template-columns:repeat(7,1fr);gap:3px;}
+  .cal-cell{min-height:60px;padding:3px;font-size:10.5px;}
+  .form-row label{min-width:100%;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center;">
+    <div>
+      <h1 id="headerTitle">シフト確認・申請</h1>
+      <p id="headerSub">店舗を選んでください</p>
+    </div>
+    <button class="btn-back" id="btnBack" hidden onclick="showSelectScreen()">← 店舗選択に戻る</button>
+  </div>
+</header>
+
+<main>
+  <!-- 店舗選択画面 -->
+  <div id="selectScreen" class="select-screen">
+    <h2>確認する店舗を選んでください</h2>
+    <div class="store-btns" id="storeBtns"></div>
+  </div>
+
+  <!-- メイン表示 -->
+  <div id="mainView" hidden>
+
+    <!-- カレンダー -->
+    <div class="view-panel">
+      <h2>📅 今月のシフト</h2>
+      <div class="toolbar">
+        <label>対象月：<input type="month" id="viewMonth"></label>
+      </div>
+      <div class="calendar" id="calGrid"></div>
+    </div>
+
+    <!-- 申請フォーム -->
+    <div class="view-panel">
+      <h2>📝 希望休・調整の申請</h2>
+      <p class="hint">仮シフトに対して「どうしても休みたい日」「どうしても入れない店舗」があればここから申請してください。代表者が確認・反映します。</p>
+      <form class="req-form" id="reqForm">
+        <div class="form-row">
+          <label>申請するスタッフ
+            <select id="frmStaff"></select>
+          </label>
+          <label>種別
+            <select id="frmType">
+              <option value="休み希望">どうしても休みたい日</option>
+              <option value="店舗NG">どうしても入れない店舗</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label id="frmDateWrap">日付<input type="date" id="frmDate"></label>
+          <label id="frmStoreWrap" hidden>対象店舗
+            <select id="frmStore"></select>
+          </label>
+          <label>対象月（反映先）<input type="month" id="frmMonth"></label>
+        </div>
+        <div class="form-row">
+          <label class="full">メモ（理由など）<textarea id="frmMemo" rows="2"></textarea></label>
+        </div>
+        <button type="submit" class="btn btn-primary">申請する</button>
+      </form>
+    </div>
+
+    <!-- 申請履歴 -->
+    <div class="view-panel">
+      <h2>📋 この店舗の申請一覧</h2>
+      <table class="req-list" id="reqTable"></table>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const STORAGE_KEY = "pharmacyShiftDB_v1";
+const WEEKDAYS = ["日","月","火","水","木","金","土"];
+
+/* ---- データ読み取り（readonlyで使う） ---- */
+function loadDB(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+function saveDB(data){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+function uid(p){ return p+"_"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+let db = loadDB();
+let currentStoreId = null;
+
+/* ---- URLパラメータで店舗を自動選択 ---- */
+function init(){
+  if(!db){
+    document.getElementById("selectScreen").innerHTML =
+      `<h2>データがありません</h2><p>先に管理者画面（index.html）でスタッフ・店舗を登録してください。</p>`;
+    return;
+  }
+  renderStoreButtons();
+  const params = new URLSearchParams(location.search);
+  const sid = params.get("store");
+  if(sid && db.stores.find(s=>s.id===sid)){
+    selectStore(sid);
+  }
+}
+
+function renderStoreButtons(){
+  const wrap = document.getElementById("storeBtns");
+  wrap.innerHTML = db.stores.map(s=>
+    `<button class="store-btn" data-id="${s.id}">${esc(s.name)}</button>`
+  ).join("");
+  wrap.addEventListener("click", e=>{
+    const btn = e.target.closest(".store-btn");
+    if(btn) selectStore(btn.dataset.id);
+  });
+}
+
+function selectStore(storeId){
+  currentStoreId = storeId;
+  const store = db.stores.find(s=>s.id===storeId);
+  document.getElementById("headerTitle").textContent = store.name + " — シフト確認";
+  document.getElementById("headerSub").textContent = "シフトの確認と希望休の申請ができます";
+  document.getElementById("selectScreen").hidden = true;
+  document.getElementById("mainView").hidden = false;
+  document.getElementById("btnBack").hidden = false;
+
+  const ym = defaultMonth();
+  document.getElementById("viewMonth").value = ym;
+  document.getElementById("frmMonth").value = ym;
+
+  fillStaffSelect();
+  fillStoreSelect();
+  renderCalendar();
+  renderRequests();
+}
+
+function showSelectScreen(){
+  currentStoreId = null;
+  document.getElementById("headerTitle").textContent = "シフト確認・申請";
+  document.getElementById("headerSub").textContent = "店舗を選んでください";
+  document.getElementById("selectScreen").hidden = false;
+  document.getElementById("mainView").hidden = true;
+  document.getElementById("btnBack").hidden = true;
+}
+
+function defaultMonth(){
+  const now = new Date();
+  return now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+}
+
+function getMonthDates(ym){
+  const [y,m] = ym.split("-").map(Number);
+  const days = new Date(y,m,0).getDate();
+  const list = [];
+  for(let d=1;d<=days;d++){
+    const dt = new Date(y,m-1,d);
+    list.push({iso:`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`, day:d, weekday:dt.getDay()});
+  }
+  return list;
+}
+
+function surname(staffId){
+  const st = db.staff.find(s=>s.id===staffId);
+  return st ? st.name.split(/[\s　]+/)[0] : "?";
+}
+
+/* ---- カレンダー描画 ---- */
+function renderCalendar(){
+  db = loadDB();
+  const grid = document.getElementById("calGrid");
+  const ym = document.getElementById("viewMonth").value;
+  const shift = db.shifts[ym] || {assignments:[]};
+  const dates = getMonthDates(ym);
+
+  let html = WEEKDAYS.map(w=>`<div class="cal-head">${w}</div>`).join("");
+  for(let i=0;i<dates[0].weekday;i++) html += `<div class="cal-cell blank"></div>`;
+
+  dates.forEach(d=>{
+    const am = shift.assignments.filter(a=>a.date===d.iso && a.storeId===currentStoreId && a.shift==="AM").map(a=>surname(a.staffId));
+    const pm = shift.assignments.filter(a=>a.date===d.iso && a.storeId===currentStoreId && a.shift==="PM").map(a=>surname(a.staffId));
+    const cls = d.weekday===0?"sun":d.weekday===6?"sat":"";
+    html += `<div class="cal-cell ${cls}">
+      <div class="cal-date">${d.day}</div>
+      <div class="cal-label">午前</div><div class="cal-names">${am.length?am.map(esc).join(" "):"—"}</div>
+      <div class="cal-label">午後</div><div class="cal-names">${pm.length?pm.map(esc).join(" "):"—"}</div>
+    </div>`;
+  });
+  grid.innerHTML = html;
+}
+
+document.getElementById("viewMonth").addEventListener("change", renderCalendar);
+
+/* ---- スタッフ・店舗セレクト ---- */
+function fillStaffSelect(){
+  const sel = document.getElementById("frmStaff");
+  const storeStaff = db.staff.filter(s=>s.baseStore===currentStoreId);
+  const others = db.staff.filter(s=>s.baseStore!==currentStoreId);
+  let html = `<optgroup label="この店舗のスタッフ">`;
+  storeStaff.forEach(s=>{ html+=`<option value="${s.id}">${esc(s.name)}</option>`; });
+  html += `</optgroup>`;
+  if(others.length){
+    html += `<optgroup label="他店舗のスタッフ">`;
+    others.forEach(s=>{ html+=`<option value="${s.id}">${esc(s.name)}</option>`; });
+    html += `</optgroup>`;
+  }
+  sel.innerHTML = html;
+}
+
+function fillStoreSelect(){
+  document.getElementById("frmStore").innerHTML =
+    db.stores.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
+}
+
+document.getElementById("frmType").addEventListener("change", e=>{
+  const ng = e.target.value==="店舗NG";
+  document.getElementById("frmStoreWrap").hidden = !ng;
+});
+
+/* ---- 申請送信 ---- */
+document.getElementById("reqForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  db = loadDB(); // 最新を取得
+  const type = document.getElementById("frmType").value;
+  const staffId = document.getElementById("frmStaff").value;
+  const month = document.getElementById("frmMonth").value;
+  const date = document.getElementById("frmDate").value;
+  const storeId = document.getElementById("frmStore").value;
+  const memo = document.getElementById("frmMemo").value.trim();
+
+  if(!staffId || !month){ alert("スタッフと対象月を選んでください。"); return; }
+  if(type==="休み希望" && !date){ alert("休みたい日付を選んでください。"); return; }
+
+  db.requests.push({
+    id: uid("r"),
+    staffId, type, targetMonth: month,
+    date: date || null,
+    storeId: type==="店舗NG" ? storeId : null,
+    fromStore: currentStoreId,
+    memo,
+    status: "未確認"
+  });
+  saveDB(db);
+  document.getElementById("reqForm").reset();
+  document.getElementById("frmMonth").value = document.getElementById("viewMonth").value;
+  alert("申請を送信しました。代表者が確認後、反映されます。");
+  renderRequests();
+});
+
+/* ---- 申請一覧 ---- */
+function renderRequests(){
+  db = loadDB();
+  const tbl = document.getElementById("reqTable");
+  const myReqs = db.requests.filter(r=>r.fromStore===currentStoreId ||
+    db.staff.some(s=>s.id===r.staffId && s.baseStore===currentStoreId));
+
+  if(!myReqs.length){
+    tbl.innerHTML = `<tbody><tr><td style="padding:12px;color:var(--muted);text-align:center;">まだ申請はありません</td></tr></tbody>`;
+    return;
+  }
+  let thead = `<thead><tr><th>スタッフ</th><th>種別</th><th>日付/店舗</th><th>メモ</th><th>状態</th></tr></thead>`;
+  let rows = myReqs.slice().reverse().map(r=>{
+    const st = db.staff.find(s=>s.id===r.staffId);
+    const target = r.type==="休み希望" ? (r.date||"-") :
+      (db.stores.find(s=>s.id===r.storeId)?.name||"-");
+    return `<tr>
+      <td>${st?esc(st.name):"?"}</td>
+      <td>${esc(r.type)}</td>
+      <td>${esc(target)}</td>
+      <td>${esc(r.memo||"")}</td>
+      <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+    </tr>`;
+  }).join("");
+  tbl.innerHTML = thead + `<tbody>${rows}</tbody>`;
+}
+
+function esc(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+
+init();
+</script>
+</body>
+</html>

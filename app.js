@@ -144,6 +144,7 @@ function renderDashboard(){
   document.getElementById("finalizedBadge").hidden = !(shift && shift.finalized);
   renderShiftTable(ym);
   renderStaffStats(ym);
+  renderStoreLinks();
 }
 
 function renderShiftTable(ym){
@@ -714,6 +715,29 @@ function escapeHtml(str){
     "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
   }[c]));
 }
+
+/* ---------- 店舗用ページリンク ---------- */
+function renderStoreLinks(){
+  const wrap = document.getElementById("storeLinkList");
+  const base = location.href.replace(/index\.html.*$/,"").replace(/\?.*$/,"").replace(/\/$/,"");
+  wrap.innerHTML = db.stores.map(s=>{
+    const url = `${base}/store.html?store=${s.id}`;
+    return `<div class="store-link-card">
+      <strong>${escapeHtml(s.name)}</strong>
+      <a href="${url}" target="_blank">${url}</a>
+      <button class="copy-link" data-url="${escapeHtml(url)}">コピー</button>
+    </div>`;
+  }).join("");
+}
+
+document.getElementById("storeLinkList").addEventListener("click", e=>{
+  const btn = e.target.closest(".copy-link");
+  if(!btn) return;
+  navigator.clipboard.writeText(btn.dataset.url).then(()=>{
+    btn.textContent = "✓ コピー済み";
+    setTimeout(()=>{ btn.textContent = "コピー"; }, 1500);
+  }).catch(()=>{ prompt("URLをコピーしてください：", btn.dataset.url); });
+});
 
 /* ---------- データリセット ---------- */
 document.getElementById("btnResetAll").addEventListener("click", ()=>{
