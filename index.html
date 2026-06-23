@@ -13,10 +13,10 @@
   <div class="auth-box">
     <h2>🔒 管理者ログイン</h2>
     <p>パスワードを入力してください</p>
-    <form id="authForm">
+    <div id="authForm">
       <input type="password" id="authPass" placeholder="パスワード" autocomplete="off">
-      <button type="submit" class="btn btn-primary">ログイン</button>
-    </form>
+      <button type="button" id="authBtn" class="btn btn-primary">ログイン</button>
+    </div>
     <p id="authError" class="auth-error" hidden>パスワードが違います</p>
     <a href="store.html" class="auth-back">← 店舗ページに戻る</a>
   </div>

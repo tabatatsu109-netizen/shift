@@ -23,7 +23,7 @@
   max-width:340px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,.3);}
 .auth-box h2{margin:0 0 6px;font-size:18px;color:var(--navy);}
 .auth-box p{color:var(--muted);font-size:13px;margin:0 0 16px;}
-.auth-box form{display:flex;gap:8px;}
+.auth-box #authForm{display:flex;gap:8px;}
 .auth-box input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:5px;
   font-size:14px;font-family:inherit;}
 .auth-error{color:var(--danger);font-size:12.5px;margin:10px 0 0;}

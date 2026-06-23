@@ -3,6 +3,46 @@
    データ層：localStorage（将来 JSONBin / Firebase へ移行しやすいよう分離）
    ========================================================= */
 
+/* ---------- パスワード認証 ---------- */
+const AUTH_PASS = "kanri";
+const AUTH_KEY = "pharmacyShift_auth";
+
+(function checkAuth(){
+  const gate = document.getElementById("authGate");
+  const passInput = document.getElementById("authPass");
+  const errMsg = document.getElementById("authError");
+  const loginBtn = document.getElementById("authBtn");
+
+  if(sessionStorage.getItem(AUTH_KEY)==="ok"){
+    gate.classList.add("authenticated");
+    return;
+  }
+
+  function tryLogin(){
+    const val = passInput.value.trim();
+    if(val === AUTH_PASS){
+      sessionStorage.setItem(AUTH_KEY, "ok");
+      gate.classList.add("authenticated");
+    } else {
+      errMsg.hidden = false;
+      passInput.value = "";
+      passInput.focus();
+    }
+  }
+
+  loginBtn.addEventListener("click", function(e){
+    e.preventDefault();
+    tryLogin();
+  });
+
+  passInput.addEventListener("keydown", function(e){
+    if(e.key === "Enter"){
+      e.preventDefault();
+      tryLogin();
+    }
+  });
+})();
+
 const STORAGE_KEY = "pharmacyShiftDB_v1";
 const WEEKDAYS = ["日","月","火","水","木","金","土"];
 
