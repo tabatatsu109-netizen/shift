@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>薬局シフト管理システム</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>薬局シフト管理システム <span class="ver">MVP</span></h1>
+  <nav class="tabs" id="tabNav">
+    <button class="tab-btn active" data-tab="dashboard">代表者管理（月間シフト）</button>
+    <button class="tab-btn" data-tab="staff">スタッフ管理</button>
+    <button class="tab-btn" data-tab="stores">店舗管理</button>
+    <button class="tab-btn" data-tab="pattern">基本パターン</button>
+    <button class="tab-btn" data-tab="calendar">店舗別カレンダー</button>
+    <button class="tab-btn" data-tab="requests">希望休申請一覧</button>
+  </nav>
+</header>
+
+<main id="appMain">
+
+  <!-- 1. 代表者管理画面（月間シフト） -->
+  <section id="tab-dashboard" class="tab-panel active">
+    <div class="panel-toolbar">
+      <label>対象月：<input type="month" id="shiftMonth"></label>
+      <button id="btnGenerate" class="btn btn-primary">基本パターンから自動生成</button>
+      <button id="btnFinalize" class="btn btn-danger">最終確定</button>
+      <span id="finalizedBadge" class="badge-final" hidden>確定済み</span>
+      <label class="store-filter">店舗フィルタ：
+        <select id="storeFilter"><option value="all">すべての店舗</option></select>
+      </label>
+    </div>
+
+    <div id="shortageBox" class="warning-box"></div>
+
+    <div class="table-scroll">
+      <table id="shiftTable" class="shift-table"></table>
+    </div>
+
+    <h3>スタッフ別 勤務状況（当月）</h3>
+    <div class="table-scroll">
+      <table id="staffStatsTable" class="stats-table"></table>
+    </div>
+  </section>
+
+  <!-- 2. スタッフ管理 -->
+  <section id="tab-staff" class="tab-panel">
+    <h2>スタッフ管理</h2>
+    <form id="staffForm" class="entity-form">
+      <input type="hidden" id="staffId">
+      <div class="form-row">
+        <label>氏名<input type="text" id="staffName" required></label>
+        <label>資格<input type="text" id="staffQualification" placeholder="例：薬剤師／登録販売者"></label>
+        <label>基本勤務店舗
+          <select id="staffBaseStore"></select>
+        </label>
+      </div>
+      <div class="form-row">
+        <label>所属店舗（表示用）<input type="text" id="staffHomeStore" placeholder="例：ひまわり"></label>
+        <label>給与形態
+          <select id="staffWageType">
+            <option value="hourly">時給</option>
+            <option value="daily">日給</option>
+          </select>
+        </label>
+        <label>金額（円）<input type="number" id="staffWage" min="0" step="1"></label>
+      </div>
+      <div class="form-row">
+        <label class="weekday-off-label">基本休み曜日
+          <span class="weekday-checks" id="staffOffDays"></span>
+        </label>
+      </div>
+      <div class="form-row">
+        <label class="full-width">メモ<textarea id="staffMemo" rows="2"></textarea></label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">保存</button>
+        <button type="button" id="staffCancel" class="btn btn-light">クリア</button>
+      </div>
+    </form>
+    <div class="table-scroll">
+      <table id="staffTable" class="list-table"></table>
+    </div>
+  </section>
+
+  <!-- 3. 店舗管理 -->
+  <section id="tab-stores" class="tab-panel">
+    <h2>店舗管理</h2>
+    <form id="storeForm" class="entity-form">
+      <input type="hidden" id="storeId">
+      <div class="form-row">
+        <label>店舗名<input type="text" id="storeName" required></label>
+        <label>午前 必要人数<input type="number" id="storeAmNeed" min="0" value="1"></label>
+        <label>午後 必要人数<input type="number" id="storePmNeed" min="0" value="1"></label>
+      </div>
+      <div class="form-row">
+        <label class="full-width">メモ<textarea id="storeMemo" rows="2"></textarea></label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">保存</button>
+        <button type="button" id="storeCancel" class="btn btn-light">クリア</button>
+      </div>
+    </form>
+    <div class="table-scroll">
+      <table id="storeTable" class="list-table"></table>
+    </div>
+  </section>
+
+  <!-- 4. 基本パターン管理 -->
+  <section id="tab-pattern" class="tab-panel">
+    <h2>基本パターン管理</h2>
+    <p class="hint">スタッフごとに曜日単位の基本勤務（午前／午後にどの店舗へ入るか、休みか）を設定します。月間シフトの自動生成はこのパターンを元に行われます。</p>
+    <div class="panel-toolbar">
+      <label>スタッフ選択：
+        <select id="patternStaffSelect"></select>
+      </label>
+    </div>
+    <div class="table-scroll">
+      <table id="patternTable" class="pattern-table"></table>
+    </div>
+    <div class="form-actions">
+      <button id="btnSavePattern" class="btn btn-primary">このスタッフのパターンを保存</button>
+    </div>
+  </section>
+
+  <!-- 5. 店舗別カレンダー -->
+  <section id="tab-calendar" class="tab-panel">
+    <h2>店舗別カレンダー表示</h2>
+    <div class="panel-toolbar">
+      <label>店舗：<select id="calStoreSelect"></select></label>
+      <label>対象月：<input type="month" id="calMonth"></label>
+    </div>
+    <div id="calendarGrid" class="calendar-grid"></div>
+  </section>
+
+  <!-- 6. 希望休申請一覧 -->
+  <section id="tab-requests" class="tab-panel">
+    <h2>希望休・調整申請</h2>
+    <p class="hint">仮シフトに対して「どうしても休みたい日」「どうしても入れない店舗」を申請します。店舗側はこの画面から申請のみ行い、シフト全体は自由に変更できません。</p>
+    <form id="requestForm" class="entity-form">
+      <div class="form-row">
+        <label>スタッフ
+          <select id="reqStaff"></select>
+        </label>
+        <label>種別
+          <select id="reqType">
+            <option value="休み希望">どうしても休みたい日</option>
+            <option value="店舗NG">どうしても入れない店舗</option>
+          </select>
+        </label>
+        <label>対象月（反映先）<input type="month" id="reqTargetMonth"></label>
+      </div>
+      <div class="form-row">
+        <label id="reqDateLabel">日付<input type="date" id="reqDate"></label>
+        <label id="reqStoreLabel" hidden>対象店舗（NG）
+          <select id="reqStore"></select>
+        </label>
+      </div>
+      <div class="form-row">
+        <label class="full-width">メモ<textarea id="reqMemo" rows="2" placeholder="理由など"></textarea></label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">申請を登録</button>
+      </div>
+    </form>
+
+    <div class="table-scroll">
+      <table id="requestTable" class="list-table"></table>
+    </div>
+  </section>
+
+</main>
+
+<footer class="app-footer">
+  データはこの端末の localStorage に保存されています（将来 JSONBin / Firebase へ移行予定）。
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
